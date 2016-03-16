@@ -1,7 +1,7 @@
 #' Parameters
 if (Sys.info()['sysname']=="Windows") {
   loc_in   <- "C:/Git/Kaggle_Santander/Data/Derive"
-  loc_out  <- "C:/Git/Kaggle_Santander/Data/Anly/S01"
+  loc_out  <- "C:/Git/Kaggle_Santander/Data/Anly/S03"
 } else {
   loc_in   <- "/home/acalatroni/Kaggle_Santander/Data/Derive"
   loc_out  <- "/home/acalatroni/Kaggle_Santander/Anly/S03"
@@ -9,6 +9,7 @@ if (Sys.info()['sysname']=="Windows") {
 
 #' Packages
 pacman::p_load(pacman)
+p_load(readr,dplyr)
 p_load(h2o,h2oEnsemble)
 
 #' Start h2o
