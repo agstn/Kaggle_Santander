@@ -19,7 +19,7 @@ train <- read_csv(paste0(loc_in,"/train.csv.zip"))
 comb <- rbind(select(train,-TARGET),test)
 
 #' Remove Near Zero
-nzv <- caret::nearZeroVar(comb)
+nzv <- caret::nearZeroVar(comb, freqCut = 99/1, uniqueCut = 2)
 comb <- comb[,-nzv]
 
 #' Create Factors
