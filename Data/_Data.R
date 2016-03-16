@@ -3,7 +3,7 @@ if (Sys.info()['sysname']=="Windows") {
   loc_in   <- "C:/Git/Kaggle_Santander/Data/Raw"
   loc_out  <- "C:/Git/Kaggle_Santander/Data/Derive"
 } else {
-  loc_in   <- "~/Kaggle_Santander/Data/Raw"
+  loc_in   <- "/home/acalatroni/Kaggle_Santander/Data/Raw"
   loc_out  <- "/home/acalatroni/Kaggle_Santander/Data/Derive"
 }
 
@@ -17,7 +17,6 @@ train <- read_csv(paste0(loc_in,"/train.csv.zip"))
 
 #' Combine
 comb <- rbind(select(train,-TARGET),test)
-
 
 #' Remove Near Zero
 nzv <- caret::nearZeroVar(comb)
@@ -35,7 +34,7 @@ comb <- randomForest::na.roughfix(comb)
 
 #' Export
 train2 <- comb[1:nrow(train),]
-train2$target <- as.factor(train$target)
+train2$target <- as.factor(train$TARGET)
 saveRDS(train2,paste0(loc_out,"/train.rds"))
 
 test2  <- comb[(nrow(train)+1):nrow(comb),]
