@@ -4,7 +4,7 @@ if (Sys.info()['sysname']=="Windows") {
   loc_out  <- "C:/Git/Kaggle_Santander/Data/Anly/S01"
 } else {
   loc_in   <- "/home/acalatroni/Kaggle_Santander/Data/Raw"
-  loc_out  <- "/home/acalatroni/Kaggle_Santander/Anly/S01"
+  loc_out  <- "/home/acalatroni/Kaggle_Santander/Anly/S02"
 }
 
 #' Packages
@@ -36,7 +36,7 @@ metalearner <- "h2o.glm.wrapper"
 #' Ensemble training
 fit <- h2o.ensemble(x = x,
                     y = y,
-                    training_frame   = splits[[1]],
+                    training_frame   = train_h2o,
                     family = "binomial",
                     learner = learner,
                     metalearner = metalearner,
@@ -44,9 +44,10 @@ fit <- h2o.ensemble(x = x,
 )
 
 #' Base learner test set AUC (for comparison)
-L <- length(learner)
-auc <- sapply(seq(L), function(l) perf$base[[l]]@metrics$AUC)
-data.frame(learner, auc)
+#' Other metrics
+L   <- length(fit$learner)
+AUC  <- sapply(seq(L), function(l)  fit$basefits[[l]]@model$cross_validation_metrics@metrics$AUC)
+fit$metafit@model$coefficients_table
 
 #' Predict
 p       <- predict.h2o.ensemble(fit,test_h2o)
