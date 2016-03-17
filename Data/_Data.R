@@ -9,53 +9,36 @@ if (Sys.info()['sysname']=="Windows") {
 
 #' libraries
 pacman::p_load(pacman)
+p_load(caret)
 p_load(dplyr)
 
-#' Load csv files
-train <- read.csv(paste0(loc_in,"/train.csv"))
+#' Import data
 test  <- read.csv(paste0(loc_in,"/test.csv"))
 
-#' 0 count per line
-count0 <- function(x) {
-  return( sum(x == 0) )
-}
-train$n0 <- apply(train, 1, FUN=count0)
-test$n0 <- apply(test, 1,  FUN=count0)
+train <- read.csv(paste0(loc_in,"/train.csv"))
+target <- train$TARGET
+train <- select(train,-TARGET)
 
-#' Removing constant features
-cat("\n## Removing the constants features.\n")
-for (f in names(train)) {
-  if (length(unique(train[[f]])) == 1) {
-    cat(f, "is constant in train. We delete it.\n")
-    train[[f]] <- NULL
-    test[[f]]  <- NULL
-  }
-}
+#' Remove constant columns
+train <- train[sapply(train, function(x) length(unique(na.omit(x)))) > 1]
 
-#' Removing identical features
-features_pair <- combn(names(train), 2, simplify = F)
-toRemove <- c()
-for(pair in features_pair) {
-  f1 <- pair[1]
-  f2 <- pair[2]
-  
-  if (!(f1 %in% toRemove) & !(f2 %in% toRemove)) {
-    if (all(train[[f1]] == train[[f2]])) {
-      cat(f1, "and", f2, "are equals.\n")
-      toRemove <- c(toRemove, f2)
-    }
-  }
-}
+#' Remove duplicate columns
+train <- train[!duplicated(lapply(train,summary))]
 
-#' Features to keep
-feature.names <- setdiff(names(train), toRemove)
-train <- train[, feature.names]
-test  <-  test[, feature.names[-308]]
+#' Impute median/mode
+train <- randomForest::na.roughfix(train)
+
+#' Find and Remove linear combinations
+ldv <- findLinearCombos(train)
+train <- train[,-ldv$remove]
+
+#' Count the # of Zeros
+train$n0 <- apply(train, 1, function(x) sum(x == 0))
+test$n0  <- apply(test, 1,  function(x) sum(x == 0))
 
 #' Export
+test <- test[,names(train)]
+write.csv(test,paste0(loc_out,"/test.csv"))
+
+train <- cbind(train,target)
 write.csv(train,paste0(loc_out,"/train.csv"))
-write.csv(train,paste0(loc_out,"/test.csv"))
-
-
-
-
