@@ -9,33 +9,53 @@ if (Sys.info()['sysname']=="Windows") {
 
 #' libraries
 pacman::p_load(pacman)
-p_load(readr,dplyr)
+p_load(dplyr)
 
-#' Import data
-test  <- read_csv(paste0(loc_in,"/test.csv.zip"))
-train <- read_csv(paste0(loc_in,"/train.csv.zip"))
+#' Load csv files
+train <- read.csv(paste0(loc_in,"/train.csv"))
+test  <- read.csv(paste0(loc_in,"/test.csv"))
 
-#' Combine
-comb <- rbind(select(train,-TARGET),test)
+#' 0 count per line
+count0 <- function(x) {
+  return( sum(x == 0) )
+}
+train$n0 <- apply(train, 1, FUN=count0)
+test$n0 <- apply(test, 1,  FUN=count0)
 
-#' Remove Near Zero
-nzv <- caret::nearZeroVar(comb, freqCut = 99/1, uniqueCut = 2)
-comb <- comb[,-nzv]
+#' Removing constant features
+cat("\n## Removing the constants features.\n")
+for (f in names(train)) {
+  if (length(unique(train[[f]])) == 1) {
+    cat(f, "is constant in train. We delete it.\n")
+    train[[f]] <- NULL
+    test[[f]]  <- NULL
+  }
+}
 
-#' Create Factors
-l1 <- apply(comb,2,function(x) length(unique(x)))
-comb[,which(l1<10)] <- lapply(comb[,which(l1<10)], as.factor)
+#' Removing identical features
+features_pair <- combn(names(train), 2, simplify = F)
+toRemove <- c()
+for(pair in features_pair) {
+  f1 <- pair[1]
+  f2 <- pair[2]
+  
+  if (!(f1 %in% toRemove) & !(f2 %in% toRemove)) {
+    if (all(train[[f1]] == train[[f2]])) {
+      cat(f1, "and", f2, "are equals.\n")
+      toRemove <- c(toRemove, f2)
+    }
+  }
+}
 
-#' Converts characters to factors
-comb[sapply(comb, is.character)] <- lapply(comb[sapply(comb, is.character)],as.factor)
-
-#' Impute median/mode
-comb <- randomForest::na.roughfix(comb)
+#' Features to keep
+feature.names <- setdiff(names(train), toRemove)
+train <- train[, feature.names]
+test  <-  test[, feature.names[-308]]
 
 #' Export
-train2 <- comb[1:nrow(train),]
-train2$target <- as.factor(train$TARGET)
-saveRDS(train2,paste0(loc_out,"/train.rds"))
+write.csv(train,paste0(loc_out,"/train.csv"))
+write.csv(train,paste0(loc_out,"/test.csv"))
 
-test2  <- comb[(nrow(train)+1):nrow(comb),]
-saveRDS(test2,paste0(loc_out,"/test.rds"))
+
+
+
