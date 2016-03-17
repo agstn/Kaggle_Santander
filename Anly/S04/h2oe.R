@@ -19,6 +19,9 @@ h2o.init(nthreads=-1)
 train <- read.csv(paste0(loc_in,"/train.csv"))
 test  <- read.csv(paste0(loc_in,"/test.csv"))
 
+#' target as factor
+train$target <- as.factor(train$target)
+
 #' Import Data
 train_h2o <- as.h2o(train, destination_frame = "train.hex")
 test_h2o  <- as.h2o(test,  destination_frame = "test.hex")
@@ -40,9 +43,10 @@ learner <- c("h2o.glm.1","h2o.glm.2","h2o.glm.3"
              "h2o.gbm.21","h2o.gbm.22",
              "h2o.deeplearning.1","h2o.deeplearning.2","h2o.deeplearning.3",
              "h2o.deeplearning.4", "h2o.deeplearning.5","h2o.deeplearning.6",
-             "h2o.deeplearning.7")
+             "h2o.deeplearning.7"
+             )
 
-metalearner <- "h2o.deeplearning.wrapper"
+metalearner <- "h2o.glm.wrapper"
 
 #' Ensemble training
 fit <- h2o.ensemble(x = x,
@@ -54,9 +58,19 @@ fit <- h2o.ensemble(x = x,
                     cvControl = list(V=5)
 )
 
+#' Results
+
+L   <- length(fit$learner)
+AUC  <- sapply(seq(L), function(l)  fit$basefits[[l]]@model$cross_validation_metrics@metrics$AUC)
+data.frame(fit$metafit@model$coefficients_table[-1,],AUC)
+
 #' Predict
 p       <- predict.h2o.ensemble(fit,test_h2o)
-p1      <- as.vector(p$pred[,"p1"])
+p1      <- as.vector(p$pred[,"predict"])
 
-submission <- data.frame(ID=test$ID,PredictedProb=p1)
+submission <- data.frame(ID=test$ID,TARGET=p1)
 write_csv(submission,paste0(loc_out,"/submission.csv"))
+
+#' All done, shutdown H2O
+# h2o.shutdown(prompt=FALSE)
+
