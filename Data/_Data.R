@@ -26,19 +26,19 @@ train <- train[sapply(train, function(x) length(unique(na.omit(x)))) > 1]
 train <- train[!duplicated(lapply(train,summary))]
 
 #' Impute median/mode
-train <- randomForest::na.roughfix(train)
+# train <- randomForest::na.roughfix(train)
 
 #' Find and Remove linear combinations
-ldv <- findLinearCombos(train)
-train <- train[,-ldv$remove]
+# ldv <- findLinearCombos(train)
+# train <- train[,-ldv$remove]
 
 #' Count the # of Zeros
-train$n0 <- apply(train, 1, function(x) sum(x == 0))
-test$n0  <- apply(test, 1,  function(x) sum(x == 0))
+# train$n0 <- apply(train, 1, function(x) sum(x == 0))
+# test$n0  <- apply(test, 1,  function(x) sum(x == 0))
 
 #' Export
 test <- test[,names(train)]
-write.csv(test,paste0(loc_out,"/test.csv"))
+write.csv(test,paste0(loc_out,"/test.csv"), row.names = F)
 
 train <- cbind(train,target)
-write.csv(train,paste0(loc_out,"/train.csv"))
+write.csv(train,paste0(loc_out,"/train.csv"), row.names = F)
