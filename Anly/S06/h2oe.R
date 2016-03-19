@@ -36,17 +36,14 @@ x      <- setdiff(names(train_h2o[,-1]), y)
 family <- "binomial"
 
 #' Specify the base learner & the metalearner
-source(paste0(loc_out,"/",'_base_learners.R'))
-#source(paste0(loc_out,"/",'_SLnnls.R'))
+# source(paste0(loc_out,"/",'_base_learners.R'))
+# source(paste0(loc_out,"/",'_SLnnls.R'))
 
-learner <- c(
-  "h2o.glm.1","h2o.glm.2","h2o.glm.3"
-  #,
-  #"h2o.rf.1","h2o.rf.2"
-  #,"h2o.rf.3","h2o.rf.4",
-  #"h2o.gbm.1","h2o.gbm.2","h2o.gbm.3","h2o.gbm.4","h2o.gbm.5","h2o.gbm.6","h2o.gbm.7","h2o.gbm.8",
-  #"h2o.dl.1","h2o.dl.2","h2o.dl.3","h2o.dl.4", "h2o.dl.5","h2o.dl.6","h2o.dl.7"
-)
+#' Specify the base learner & the metalearner
+learner <- c("h2o.glm.wrapper",
+             "h2o.randomForest.wrapper",
+             "h2o.gbm.wrapper",
+             "h2o.deeplearning.wrapper")
 
 metalearner <- "h2o.glm.wrapper"
 
@@ -70,6 +67,13 @@ L   <- length(fit$learner)
 AUC <- sapply(seq(L), function(l)  fit$basefits[[l]]@model$cross_validation_metrics@metrics$AUC)
 w   <- fit$metafit$fit$object$x
 data.frame(l=learner,AUC=AUC,w=w)
+
+#' Base learner test set AUC (for comparison)
+#' Other metrics
+L   <- length(fit$learner)
+AUC  <- sapply(seq(L), function(l)  fit$basefits[[l]]@model$cross_validation_metrics@metrics$AUC)
+data.frame(l=learner,AUC=AUC)
+fit$metafit@model$coefficients_table
 
 #' Predict
 p       <- predict.h2o.ensemble(fit,test_h2o)
